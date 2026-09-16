@@ -7,7 +7,10 @@ export type Citation = {
   lastName: string;
   licensePlate: string;
   plateState: string;
+  /** Agency / city, e.g. "Emerson, GA" */
   jurisdiction: string;
+  /** School / enforcement location, e.g. "North Side High School" */
+  location: string;
   state: string;
   violationDate: string;
   issueDate: string;
@@ -30,6 +33,7 @@ export type CitationSummary = {
   licensePlate: string;
   plateState: string;
   jurisdiction: string;
+  location: string;
   status: CitationStatus;
   amountDue: number;
   lateFee: number;

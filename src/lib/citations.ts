@@ -11,8 +11,19 @@ export function normalizePlate(plate: string): string {
   return plate.replace(/[\s\-]/g, "").toUpperCase();
 }
 
+/**
+ * Normalize a citation number for lookup.
+ * Accepts optional "BL-" / "BL" prefix (case-insensitive); the stored POC
+ * values are the core id only: 1–3 digits + 6 alphanumeric characters.
+ */
 export function normalizeCitationNumber(citationNumber: string): string {
-  return citationNumber.replace(/\s+/g, "").toUpperCase();
+  let value = citationNumber.replace(/\s+/g, "").toUpperCase();
+  if (value.startsWith("BL-")) {
+    value = value.slice(3);
+  } else if (value.startsWith("BL") && value.length > 2 && /[0-9]/.test(value[2])) {
+    value = value.slice(2);
+  }
+  return value;
 }
 
 export function toSummary(citation: Citation): CitationSummary {
@@ -23,6 +34,7 @@ export function toSummary(citation: Citation): CitationSummary {
     licensePlate: citation.licensePlate,
     plateState: citation.plateState,
     jurisdiction: citation.jurisdiction,
+    location: citation.location,
     status: citation.status,
     amountDue: citation.amountDue,
     lateFee: citation.lateFee,

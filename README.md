@@ -17,9 +17,18 @@ Successful lookups return:
 ```json
 {
   "count": 1,
-  "citations": [{ "citationNumber": "VP-10482", "firstName": "Maria", "lastName": "Hernandez", "...": "..." }]
+  "citations": [{
+    "citationNumber": "82KX9M2A",
+    "firstName": "Maria",
+    "lastName": "Hernandez",
+    "jurisdiction": "Emerson, GA",
+    "location": "North Side High School",
+    "...": "..."
+  }]
 }
 ```
+
+Citation numbers follow `BL-{1–3 digits}{6 alphanumeric}` (e.g. `BL-82KX9M2A`). The API stores/looks up the **core** without requiring `BL-`; both `82KX9M2A` and `BL-82KX9M2A` work.
 
 See [SEED_CHEATSHEET.md](./SEED_CHEATSHEET.md) for demo identities (including multi-citation plates).
 
