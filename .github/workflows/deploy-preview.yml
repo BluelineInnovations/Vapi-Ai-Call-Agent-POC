@@ -41,6 +41,9 @@ jobs:
       - name: Build
         run: vercel build --token="$VERCEL_TOKEN"
 
+      - name: Detach git metadata for deploy auth
+        run: rm -rf .git
+
       - name: Deploy Preview
         id: deploy
         run: |

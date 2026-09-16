@@ -65,6 +65,10 @@ Required GitHub Actions secrets (Settings → Secrets and variables → Actions)
 
 Workflows live in [`.github/workflows/`](./.github/workflows/).
 
+**Note:** CI detaches `.git` before `vercel deploy` because Vercel blocks deployments when the commit author email is not a member of the Vercel project. Longer-term, add your Git author email on the Vercel account (or invite that user to the team) if you want native Git-linked deploys.
+
+SSO deployment protection was disabled on this project so Vapi can call the public API without Vercel login.
+
 ### Manual CLI deploy
 
 ```bash
