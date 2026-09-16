@@ -108,7 +108,7 @@ Auth header on tools: `Authorization: Bearer <DEMO_API_KEY>` (same secret as Ver
 3. If plate returns `count > 1` → tell the caller how many citations they have → CSR handoff message → end call.
 4. If exactly one citation → ask first and last name; LLM compares to payload (max 3 tries) → then speak basic details, or CSR handoff after failures.
 
-Live phone transfer is **out of scope** for this demo (message only).
+Live phone transfer is **out of scope** for this demo (message only). Telephony cutover for a real DID is documented in [docs/VOIP_STRATEGY.md](./docs/VOIP_STRATEGY.md) (BYO SIP trunk; Twilio not required).
 
 ## Web-call test scripts
 
