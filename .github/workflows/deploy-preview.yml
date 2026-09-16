@@ -14,12 +14,14 @@ concurrency:
 jobs:
   preview:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,15 +36,17 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
       - name: Build
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy Preview
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          set -euo pipefail
+          vercel deploy --prebuilt --yes --archive=tgz --token="$VERCEL_TOKEN" --json > deploy.json
+          url=$(python3 -c "import json; print(json.load(open('deploy.json'))['url'])")
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Preview URL: $url"
 
