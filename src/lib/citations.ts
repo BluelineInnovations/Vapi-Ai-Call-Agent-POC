@@ -1,0 +1,66 @@
+import citationsData from "@/data/citations.json";
+import type {
+  Citation,
+  CitationLookupResponse,
+  CitationSummary,
+} from "@/lib/types";
+
+const citations = citationsData as Citation[];
+
+export function normalizePlate(plate: string): string {
+  return plate.replace(/[\s\-]/g, "").toUpperCase();
+}
+
+export function normalizeCitationNumber(citationNumber: string): string {
+  return citationNumber.replace(/\s+/g, "").toUpperCase();
+}
+
+export function toSummary(citation: Citation): CitationSummary {
+  return {
+    citationNumber: citation.citationNumber,
+    firstName: citation.firstName,
+    lastName: citation.lastName,
+    licensePlate: citation.licensePlate,
+    plateState: citation.plateState,
+    jurisdiction: citation.jurisdiction,
+    status: citation.status,
+    amountDue: citation.amountDue,
+    lateFee: citation.lateFee,
+    dueDate: citation.dueDate,
+    violationDate: citation.violationDate,
+    issueDate: citation.issueDate,
+  };
+}
+
+export function findByCitationNumber(
+  citationNumber: string,
+): Citation | undefined {
+  const target = normalizeCitationNumber(citationNumber);
+  return citations.find(
+    (c) => normalizeCitationNumber(c.citationNumber) === target,
+  );
+}
+
+export function findByPlate(
+  plate: string,
+  state?: string,
+): CitationLookupResponse {
+  const normalizedPlate = normalizePlate(plate);
+  const normalizedState = state?.trim().toUpperCase();
+
+  const matches = citations.filter((c) => {
+    const plateMatch = normalizePlate(c.licensePlate) === normalizedPlate;
+    if (!plateMatch) return false;
+    if (!normalizedState) return true;
+    return c.plateState.toUpperCase() === normalizedState;
+  });
+
+  return {
+    count: matches.length,
+    citations: matches.map(toSummary),
+  };
+}
+
+export function getCitationCount(): number {
+  return citations.length;
+}

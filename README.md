@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Citation Demo API
 
-## Getting Started
+Proof-of-concept TypeScript API for wiring a Vapi voice agent to citation lookups, as if connecting to a real Violation Payment data source.
 
-First, run the development server:
+**All seed records are fake demo PII.**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## What it provides
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/health` | none | Liveness + citation count |
+| `GET` | `/api/citations/:citationNumber` | Bearer / `x-api-key` | Lookup by citation number |
+| `GET` | `/api/citations?plate=&state=` | Bearer / `x-api-key` | Lookup by plate (`state` optional) |
+
+Successful lookups return:
+
+```json
+{
+  "count": 1,
+  "citations": [{ "citationNumber": "VP-10482", "firstName": "Maria", "lastName": "Hernandez", "...": "..." }]
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+See [SEED_CHEATSHEET.md](./SEED_CHEATSHEET.md) for demo identities (including multi-citation plates).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Security model
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Set `DEMO_API_KEY` in `.env.local` (local) and Vercel project env (production).
+- Citation routes require `Authorization: Bearer <DEMO_API_KEY>` or `x-api-key: <DEMO_API_KEY>`.
+- Vapi API Request tools should send the same header — the same pattern used for a real backend secret.
+- Do not commit real keys. `.env.local` is gitignored.
 
-## Learn More
+## Local development
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cp .env.example .env.local
+# set DEMO_API_KEY to a long random secret
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Smoke test:
 
-## Deploy on Vercel
+```bash
+source .env.local
+curl -s http://localhost:3000/api/health
+curl -s -H "Authorization: Bearer $DEMO_API_KEY" \
+  http://localhost:3000/api/citations/VP-10482
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy to Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### GitHub Actions (preferred)
+
+Pushes to `main` deploy production. Pull requests and non-`main` branches deploy previews.
+
+Required GitHub Actions secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Source |
+| --- | --- |
+| `VERCEL_TOKEN` | Vercel personal/team token (`vercel tokens add`) |
+| `VERCEL_ORG_ID` | `.vercel/project.json` → `orgId` |
+| `VERCEL_PROJECT_ID` | `.vercel/project.json` → `projectId` |
+
+Workflows live in [`.github/workflows/`](./.github/workflows/).
+
+### Manual CLI deploy
+
+```bash
+npm i -g vercel
+vercel login
+vercel link
+vercel env add DEMO_API_KEY production
+vercel --prod
+```
+
+**Production URL:** [https://citation-demo-api.vercel.app](https://citation-demo-api.vercel.app)
+
+**GitHub:** [BluelineInnovations/Vapi-Ai-Call-Agent-POC](https://github.com/BluelineInnovations/Vapi-Ai-Call-Agent-POC)
+
+Vapi API Request tools (already wired to **Violation Payment Processing Agent**):
+
+| Tool | ID | Endpoint |
+| --- | --- | --- |
+| `lookup_citation_by_number` | `4a90b931-15af-4675-a55b-b674a71e34e3` | `GET /api/citations/{{citationNumber}}` |
+| `lookup_citation_by_plate` | `296439d2-43cb-47be-a4d5-be9711a27d4b` | `GET /api/citations?plate={{plate}}&state={{state}}` |
+
+Auth header on tools: `Authorization: Bearer <DEMO_API_KEY>` (same secret as Vercel env).
+
+## Vapi agent behavior (this demo)
+
+1. Ask for citation number **or** license plate. If neither → say a human CSR is needed → end call.
+2. Lookup via tools. Never invent balances.
+3. If plate returns `count > 1` → tell the caller how many citations they have → CSR handoff message → end call.
+4. If exactly one citation → ask first and last name; LLM compares to payload (max 3 tries) → then speak basic details, or CSR handoff after failures.
+
+Live phone transfer is **out of scope** for this demo (message only).
+
+## Web-call test scripts
+
+Use Vapi dashboard web call against **Violation Payment Processing Agent**:
+
+1. Citation `VP-10482` + name Maria Hernandez → details
+2. Citation `VP-10482` + three wrong names → CSR message
+3. Plate `TN7K442` + James Whitaker → details
+4. Plate `MULTI99` → “3 citations” + CSR message
+5. No citation / no plate → CSR message
